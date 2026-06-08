@@ -1,0 +1,5 @@
+fastapi>=0.116.0
+uvicorn[standard]
+pydantic>=2.11
+docker
+python-multipart
