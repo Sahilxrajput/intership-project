@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from enum import Enum
 from typing import Optional
 
@@ -16,7 +16,7 @@ class ExecutionRequest(BaseModel):
     stdin: Optional[str] = Field(default="", description="Standard input for the program")
     timeout: Optional[int] = Field(default=10, ge=1, le=30, description="Execution timeout in seconds")
 
-    @validator("code")
+    @field_validator("code")
     def code_must_not_be_empty(cls, v):
         if not v.strip():
             raise ValueError("Code cannot be empty or whitespace only")
