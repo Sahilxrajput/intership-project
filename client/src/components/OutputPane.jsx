@@ -1,3 +1,5 @@
+import { Download } from "lucide-react";
+
 export default function OutputPane({ output, status }) {
   const isError = status === "error";
 
@@ -30,7 +32,7 @@ export default function OutputPane({ output, status }) {
       </div>
 
       {/* Output body */}
-      <div className="px-3 py-2.5">
+      <div className="px-6 py-2.5">
         <pre
           className={`whitespace-pre-wrap break-words leading-relaxed ${
             isError ? "text-red-300/90" : "text-slate-300"
@@ -54,14 +56,56 @@ export default function OutputPane({ output, status }) {
         {/* Simulation notice */}
         {output.simulated && (
           <div className="mt-2 pt-2 border-t border-slate-700 flex items-start gap-2">
-            <svg className="mt-0.5 shrink-0" width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <circle cx="6" cy="6" r="5" stroke="#7C6AF7" strokeWidth="1.2"/>
-              <path d="M6 4V6.5M6 8V8.3" stroke="#7C6AF7" strokeWidth="1.2" strokeLinecap="round"/>
+            <svg
+              className="mt-0.5 shrink-0"
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+            >
+              <circle cx="6" cy="6" r="5" stroke="#7C6AF7" strokeWidth="1.2" />
+              <path
+                d="M6 4V6.5M6 8V8.3"
+                stroke="#7C6AF7"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+              />
             </svg>
-            <span className="text-[10px] text-slate-500 leading-relaxed">{output.note}</span>
+            <span className="text-[10px] text-slate-500 leading-relaxed">
+              {output.note}
+            </span>
           </div>
         )}
       </div>
+
+      {output.job_id &&
+        output.files?.length > 0 &&
+        output.files.map((file) => {
+          const fileUrl = `${import.meta.env.VITE_API_URL}/files/${output.job_id}/${file}`;
+
+          return (
+            <div
+              key={file}
+              className="flex items-start justify-between py-4 px-6"
+            >
+              <img
+                src={fileUrl}
+                alt={file}
+                className="rounded-lg border border-slate-700 max-w-full"
+              />
+              <a
+                href={fileUrl}
+                download
+                target="_blank"
+                rel="noreferrer"
+                className="p-1.5 rounded-md hover:bg-slate-700 transition-colors"
+                title="Download"
+              >
+                <Download size={24} className="text-blue-500" />
+              </a>
+            </div>
+          );
+        })}
     </div>
   );
 }

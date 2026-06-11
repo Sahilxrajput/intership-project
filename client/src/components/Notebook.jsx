@@ -146,32 +146,53 @@ function runJS(code) {
   }
 }
 
+
 async function runViaAPI(code, language) {
   try {
-    const submitRes = await fetch(import.meta.env.VITE_API_URL+"/execute", {
+    const submitRes = await fetch(import.meta.env.VITE_API_URL + "/execute", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ language, code }),
+      body: JSON.stringify({
+        language,
+        code,
+      }),
     });
 
-    
-    if (!submitRes.ok) throw new Error("Execution service unavailable.");
+    if (!submitRes.ok) {
+      throw new Error("Execution service unavailable.");
+    }
+
     const data = await submitRes.json();
-    console.log("data: ", data);
 
     const out = data.stdout || "";
     const err = data.stderr || data.compile_output || "";
+
     const isErr = !!err && !out;
 
     return {
       error: isErr,
+
       text: isErr ? err.trim() : out.trim() || "(no output)",
-      ...(err && out ? { stderr: err.trim() } : {}),
+
+      ...(err && out
+        ? {
+            stderr: err.trim(),
+          }
+        : {}),
+
+      job_id: data.job_id,
+
+      files: data.files || [],
+
+      execution_time_ms: data.execution_time_ms,
+
+      language: data.language,
+
+      status: data.status,
     };
   } catch (e) {
-    // Graceful fallback — show a note rather than crash
     return {
       error: false,
       simulated: true,

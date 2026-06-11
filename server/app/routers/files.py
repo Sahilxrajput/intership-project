@@ -12,12 +12,16 @@ def get_file(
     job_id: str,
     filename: str,
 ):
-    path = Path("workspaces") / job_id / filename
+    file_path = Path("workspaces") / job_id / filename
 
-    if not path.exists():
+    if not file_path.exists():
         raise HTTPException(
             status_code=404,
             detail="File not found",
         )
 
-    return FileResponse(path)
+    return FileResponse(
+        path=file_path,
+        filename=filename,
+        media_type="application/octet-stream",
+    )

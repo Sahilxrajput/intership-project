@@ -2,7 +2,7 @@ import threading
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routers import execute, health
+from app.routers import execute, health, files
 from app.utils.logger import get_logger
 from contextlib import asynccontextmanager
 from app.utils.cleanup import cleanup_worker
@@ -40,6 +40,7 @@ app.add_middleware(
 
 app.include_router(health.router, prefix="/api/v1", tags=["Health"])
 app.include_router(execute.router, prefix="/api/v1", tags=["Execution"])
+app.include_router(files.router, prefix="/api/v1", tags=["Files"])
 
 
 @app.on_event("startup")

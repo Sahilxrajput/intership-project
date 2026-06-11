@@ -1,6 +1,7 @@
 import Editor from "@monaco-editor/react";
 import OutputPane from "./OutputPane";
 import RunButton from "./RunButton";
+import { useEffect } from "react";
 
 const EDITOR_OPTIONS = {
   minimap: { enabled: false },
@@ -41,6 +42,7 @@ export default function Cell({
       onRun();
     }
   };
+
 
   return (
     <div

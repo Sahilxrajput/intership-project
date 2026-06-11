@@ -80,11 +80,10 @@ class DockerExecutionService:
         config = LANGUAGE_CONFIG[language]
         start_time = time.time()
 
-
         workspace = WorkspaceService.create_workspace()
         tmpdir = str(workspace.resolve())
         job_id = workspace.name
-        
+
         logger.info(f"Mounting workspace: {tmpdir}")
 
         try:
@@ -107,7 +106,6 @@ class DockerExecutionService:
                 encoding="utf-8",
             ) as f:
                 f.write(stdin)
-
 
             logger.info(f"Temp directory: {tmpdir}")
             logger.info(f"Written file: {code_path}")
@@ -338,12 +336,22 @@ class DockerExecutionService:
         workspace: Path,
         source_filename: str,
     ):
+        logger.info(f"Scanning workspace: {workspace}")
+
         ignored = {
             source_filename,
             "stdin.txt",
         }
-        return [
-            file.name
-            for file in workspace.iterdir()
-            if file.is_file() and file.name not in ignored
-        ]
+
+        files = []
+
+        for file in workspace.iterdir():
+
+            logger.info(f"Found file: {file.name}")
+
+            if file.is_file() and file.name not in ignored:
+                files.append(file.name)
+
+        logger.info(f"Generated files: {files}")
+
+        return files
