@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Monaco editor scrollbar override */
+.monaco-editor .scrollbar .slider {
+  background: #2A2D3E !important;
+  border-radius: 4px !important;
+}
+
+.monaco-editor .scrollbar .slider:hover {
+  background: #3A3D50 !important;
+}
+
+/* Remove Monaco outline */
+.monaco-editor {
+  outline: none !important;
+}
+
+.monaco-editor-background,
+.monaco-editor .margin {
+  background-color: #1A1D27 !important;
+}
