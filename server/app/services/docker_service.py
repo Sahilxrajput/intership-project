@@ -4,6 +4,8 @@ import os
 import time
 
 from docker.errors import ImageNotFound, APIError
+from pathlib import Path
+from app.services.workspace_service import WorkspaceService
 
 from app.models.schemas import (
     Language,
@@ -19,25 +21,25 @@ logger = get_logger(__name__)
 # ─────────────────────────────────────────────────────────────
 LANGUAGE_CONFIG = {
     Language.PYTHON: {
-        "image": "python:3.11-alpine",
+        "image": "my-python-runner",
         "filename": "solution.py",
         "run_cmd": "python solution.py",
         "compile_cmd": None,
     },
     Language.JAVASCRIPT: {
-        "image": "node:18-alpine",
+        "image": "my-node-runner",
         "filename": "solution.js",
         "run_cmd": "node solution.js",
         "compile_cmd": None,
     },
     Language.JAVA: {
-        "image": "eclipse-temurin:17-jdk",
+        "image": "my-java-runner",
         "filename": "Solution.java",
         "run_cmd": "java Solution",
         "compile_cmd": "javac Solution.java",
     },
     Language.CPP: {
-        "image": "gcc:13-bookworm",
+        "image": "my-cpp-runner",
         "filename": "solution.cpp",
         "run_cmd": "./solution",
         "compile_cmd": "g++ -o solution solution.cpp",
@@ -78,13 +80,34 @@ class DockerExecutionService:
         config = LANGUAGE_CONFIG[language]
         start_time = time.time()
 
-        with tempfile.TemporaryDirectory() as tmpdir:
+
+        workspace = WorkspaceService.create_workspace()
+        tmpdir = str(workspace.resolve())
+        job_id = workspace.name
+        
+        logger.info(f"Mounting workspace: {tmpdir}")
+
+        try:
 
             # Write source file
             code_path = os.path.join(tmpdir, config["filename"])
 
             with open(code_path, "w", encoding="utf-8") as f:
                 f.write(code)
+
+            # Save stdin for debugging / persistence
+            stdin_path = os.path.join(
+                tmpdir,
+                "stdin.txt",
+            )
+
+            with open(
+                stdin_path,
+                "w",
+                encoding="utf-8",
+            ) as f:
+                f.write(stdin)
+
 
             logger.info(f"Temp directory: {tmpdir}")
             logger.info(f"Written file: {code_path}")
@@ -116,7 +139,8 @@ class DockerExecutionService:
                         exit_code=compile_result["exit_code"],
                         execution_time_ms=(time.time() - start_time) * 1000,
                         language=language,
-                        message="Compilation failed",
+                        job_id=job_id,
+                        # message="Compilation failed",
                     )
 
             # ─────────────────────────────
@@ -140,33 +164,42 @@ class DockerExecutionService:
 
             logger.info(f"Run result: {run_result}")
 
-        execution_time_ms = (time.time() - start_time) * 1000
+            execution_time_ms = (time.time() - start_time) * 1000
 
-        if run_result["timed_out"]:
-            return ExecutionResponse(
-                status=ExecutionStatus.TIMEOUT,
-                stdout="",
-                stderr=f"Execution timed out after {timeout} seconds",
-                exit_code=124,
-                execution_time_ms=execution_time_ms,
-                language=language,
-                message=f"Program exceeded {timeout}s time limit",
+            if run_result["timed_out"]:
+                return ExecutionResponse(
+                    status=ExecutionStatus.TIMEOUT,
+                    stdout="",
+                    stderr=f"Execution timed out after {timeout} seconds",
+                    exit_code=124,
+                    execution_time_ms=execution_time_ms,
+                    language=language,
+                    job_id=job_id,
+                )
+
+            status = (
+                ExecutionStatus.SUCCESS
+                if run_result["exit_code"] == 0
+                else ExecutionStatus.ERROR
             )
 
-        status = (
-            ExecutionStatus.SUCCESS
-            if run_result["exit_code"] == 0
-            else ExecutionStatus.ERROR
-        )
+            generated_files = self._get_generated_files(
+                workspace,
+                config["filename"],
+            )
 
-        return ExecutionResponse(
-            status=status,
-            stdout=run_result["stdout"],
-            stderr=run_result["stderr"],
-            exit_code=run_result["exit_code"],
-            execution_time_ms=execution_time_ms,
-            language=language,
-        )
+            return ExecutionResponse(
+                status=status,
+                stdout=run_result["stdout"],
+                stderr=run_result["stderr"],
+                exit_code=run_result["exit_code"],
+                execution_time_ms=execution_time_ms,
+                language=language,
+                job_id=job_id,
+                files=generated_files,
+            )
+        finally:
+            pass
 
     def _run_container(
         self,
@@ -299,3 +332,18 @@ class DockerExecutionService:
                     container.remove(force=True)
                 except Exception:
                     pass
+
+    def _get_generated_files(
+        self,
+        workspace: Path,
+        source_filename: str,
+    ):
+        ignored = {
+            source_filename,
+            "stdin.txt",
+        }
+        return [
+            file.name
+            for file in workspace.iterdir()
+            if file.is_file() and file.name not in ignored
+        ]

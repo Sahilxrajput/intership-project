@@ -8,3 +8,7 @@ venv/
 dist/
 .DS_Store
 *.log
+workspace/
+.idea/
+.vscode/
+.pytest_cache/

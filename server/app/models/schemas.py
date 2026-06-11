@@ -42,9 +42,10 @@ class ExecutionStatus(str, Enum):
 
 class ExecutionResponse(BaseModel):
     status: ExecutionStatus
-    stdout: str = ""
-    stderr: str = ""
-    exit_code: int = 0
-    execution_time_ms: float = 0.0
+    stdout: str
+    stderr: str
+    exit_code: int
+    execution_time_ms: float
     language: Language
-    message: Optional[str] = None
+    job_id: str | None = None
+    files: list[str] = []

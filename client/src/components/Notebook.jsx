@@ -148,21 +148,18 @@ function runJS(code) {
 
 async function runViaAPI(code, language) {
   try {
-    // Submit
-    // const submitRes = await fetch(import.meta.VITE_API_URL+"/execute", {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify({ language, code }),
-    // });
+    const submitRes = await fetch(import.meta.env.VITE_API_URL+"/execute", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ language, code }),
+    });
 
-    // console.log(data);
-    console.log("api url: ", import.meta.env.VITE_API_URL);
-    console.log("duplicate url: ", import.meta.env.VITE_API_URRL);
-
+    
     if (!submitRes.ok) throw new Error("Execution service unavailable.");
     const data = await submitRes.json();
+    console.log("data: ", data);
 
     const out = data.stdout || "";
     const err = data.stderr || data.compile_output || "";

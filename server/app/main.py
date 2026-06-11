@@ -1,13 +1,29 @@
+import threading
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.config import settings
 from app.routers import execute, health
 from app.utils.logger import get_logger
-from app.config import settings
+from contextlib import asynccontextmanager
+from app.utils.cleanup import cleanup_worker
 
 logger = get_logger(__name__)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+
+    threading.Thread(
+        target=cleanup_worker,
+        daemon=True,
+    ).start()
+
+    yield
+
+
 app = FastAPI(
     title="CodeX Execution Engine",
+    lifespan=lifespan,
     description="Secure, sandboxed code execution backend using Docker",
     version="1.0.0",
     docs_url="/docs",
