@@ -165,7 +165,7 @@ async function runViaAPI(code, language) {
     }
 
     const data = await submitRes.json();
-
+    console.log("data: ", data)
     const out = data.stdout || "";
     const err = data.stderr || data.compile_output || "";
 
@@ -215,3 +215,4 @@ function getSimulatedOutput(code, language) {
   const matches = [...code.matchAll(pattern)].map((m) => m[1].trim());
   return matches.length > 0 ? matches.join("\n") : "(no output)";
 }
+
